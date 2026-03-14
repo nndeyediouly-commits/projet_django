@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}Mes Tâches - ESMT {% endblock %}
+{% block nav_tasks %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">
+            <i class="bi bi-list-task text-primary"></i> Mes Tâches
+        </h4>
+        <p class="text-muted">{{ tasks.count }} tâche(s) assignée(s)</p>
+    </div>
+</div>
+
+<!-- RECHERCHE ET FILTRES AVANCÉS -->
+<div class="card p-3 mb-4">
+    <form method="get">
+        <div class="row g-2 align-items-end">
+
+            <!-- Recherche -->
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small">
+                    <i class="bi bi-search"></i> Recherche
+                </label>
+                <input type="text" name="search" class="form-control form-control-sm"
+                       placeholder="Titre, description..."
+                       value="{{ search }}">
+            </div>
+
+            <!-- Filtre statut -->
+            <div class="col-md-2">
+                <label class="form-label fw-semibold small">Statut</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Tous</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}"
+                        {% if status_filter == val %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filtre projet -->
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small">Projet</label>
+                <select name="project" class="form-select form-select-sm">
+                    <option value="">Tous les projets</option>
+                    {% for p in user_projects %}
+                    <option value="{{ p.pk }}"
+                        {% if project_filter == p.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ p.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filtre deadline -->
+            <div class="col-md-2">
+                <label class="form-label fw-semibold small">Échéance</label>
+                <select name="deadline" class="form-select form-select-sm">
+                    <option value="">Toutes</option>
+                    <option value="today"
+                        {% if deadline_filter == 'today' %}selected{% endif %}>
+                        Aujourd'hui
+                    </option>
+                    <option value="week"
+                        {% if deadline_filter == 'week' %}selected{% endif %}>
+                        Cette semaine
+                    </option>
+                    <option value="overdue"
+                        {% if deadline_filter == 'overdue' %}selected{% endif %}>
+                        En retard
+                    </option>
+                </select>
+            </div>
+
+            <!-- Boutons -->
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-sm w-100"
+                        style="background:brown; color:bisque;">
+                    <i class="bi bi-funnel"></i>
+                </button>
+            </div>
+            <div class="col-md-1">
+                <a href="{% url 'task_list' %}"
+                   class="btn btn-sm btn-outline-secondary w-100">
+                    <i class="bi bi-x"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- LISTE DES TÂCHES -->
+{% if tasks %}
+<div class="row g-3">
+    {% for task in tasks %}
+    <div class="col-md-6">
+        <div class="card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="fw-bold mb-0">{{ task.title }}</h6>
+                {% if task.status == 'todo' %}
+                    <span class="badge bg-secondary">À faire</span>
+                {% elif task.status == 'in_progress' %}
+                    <span class="badge bg-primary">En cours</span>
+                {% else %}
+                    <span class="badge bg-success">Terminé</span>
+                {% endif %}
+            </div>
+
+            <p class="text-muted small mb-2">
+                {{ task.description|truncatechars:100|default:"Aucune description" }}
+            </p>
+
+            <div class="d-flex justify-content-between text-muted small mb-3">
+                <span>
+                    <i class="bi bi-folder"></i>
+                    {{ task.project.name }}
+                </span>
+                <span>
+                    <i class="bi bi-calendar3"></i>
+                    {{ task.deadline|date:"d/m/Y H:i" }}
+                </span>
+            </div>
+
+            <div class="mt-auto d-flex gap-2">
+                <a href="{% url 'project_detail' task.project.pk %}"
+                   class="btn btn-sm btn-outline-secondary flex-grow-1">
+                    <i class="bi bi-eye"></i> Voir le projet
+                </a>
+                <a href="{% url 'task_edit' task.pk %}"
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Modifier
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-inbox" style="font-size:4rem; color:brown;"></i>
+    <h5 class="mt-3 text-muted">Aucune tâche assignée</h5>
+    <p class="text-muted">Les tâches qui vous sont assignées apparaîtront ici</p>
+</div>
+{% endif %}
+
+{% endblock %}

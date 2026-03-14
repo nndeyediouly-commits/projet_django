@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.name }} - ESMT {% endblock %}
+{% block nav_projects %}active{% endblock %}
+
+{% block content %}
+
+<!-- EN-TÊTE DU PROJET -->
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">
+            <i class="bi bi-folder-fill text-warning"></i> {{ project.name }}
+        </h4>
+        <p class="text-muted mb-0">{{ project.description|default:"Aucune description" }}</p>
+        <small class="text-muted">
+            <i class="bi bi-person"></i> Créé par {{ project.created_by.get_full_name|default:project.created_by.username }}
+            &nbsp;|&nbsp;
+            <i class="bi bi-people"></i> {{ project.members.count }} membre(s)
+        </small>
+    </div>
+    <div class="d-flex gap-2">
+        {% if is_creator %}
+        <a href="{% url 'task_create' project.pk %}" class="btn fw-bold"
+           style="background:brown; color:bisque;">
+            <i class="bi bi-plus-circle"></i> Ajouter une tâche
+        </a>
+        <a href="{% url 'project_edit' project.pk %}"
+           class="btn btn-outline-warning">
+            <i class="bi bi-pencil"></i>
+        </a>
+        <a href="{% url 'project_delete' project.pk %}"
+           class="btn btn-outline-danger">
+            <i class="bi bi-trash"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- FILTRES -->
+<div class="card p-3 mb-4">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label fw-semibold small">Filtrer par statut</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">-- Tous les statuts --</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}"
+                    {% if status_filter == val %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold small">Filtrer par membre</label>
+            <select name="user" class="form-select form-select-sm">
+                <option value="">-- Tous les membres --</option>
+                {% for member in members %}
+                <option value="{{ member.pk }}"
+                    {% if user_filter == member.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ member.get_full_name|default:member.username }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-sm w-100"
+                    style="background:brown; color:bisque;">
+                <i class="bi bi-funnel"></i> Filtrer
+            </button>
+        </div>
+        <div class="col-md-2">
+            <a href="{% url 'project_detail' project.pk %}"
+               class="btn btn-sm btn-outline-secondary w-100">
+                <i class="bi bi-x"></i> Réinitialiser
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- LISTE DES TÂCHES -->
+{% if tasks %}
+<div class="row g-3">
+    {% for task in tasks %}
+    <div class="col-md-6">
+        <div class="card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="fw-bold mb-0">{{ task.title }}</h6>
+                {% if task.status == 'todo' %}
+                    <span class="badge bg-secondary">À faire</span>
+                {% elif task.status == 'in_progress' %}
+                    <span class="badge bg-primary">En cours</span>
+                {% else %}
+                    <span class="badge bg-success">Terminé</span>
+                {% endif %}
+            </div>
+
+            <p class="text-muted small mb-2">
+                {{ task.description|truncatechars:100|default:"Aucune description" }}
+            </p>
+
+            <div class="d-flex justify-content-between text-muted small mb-3">
+                <span>
+                    <i class="bi bi-calendar3"></i>
+                    {{ task.deadline|date:"d/m/Y H:i" }}
+                    {% if task.deadline < now and task.status != 'done' %}
+                        <span class="badge bg-danger ms-1">En retard</span>
+                    {% endif %}
+                </span>
+                <span>
+                    <i class="bi bi-person"></i>
+                    {{ task.assigned_to.get_full_name|default:task.assigned_to.username|default:"Non assigné" }}
+                </span>
+            </div>
+
+            {% if is_creator or task.assigned_to == request.user %}
+            <div class="mt-auto d-flex gap-2">
+                <a href="{% url 'task_edit' task.pk %}"
+                   class="btn btn-sm btn-outline-primary flex-grow-1">
+                    <i class="bi bi-pencil"></i>
+                    {% if is_creator %}Modifier{% else %}Changer statut{% endif %}
+                </a>
+                {% if is_creator %}
+                <a href="{% url 'task_delete' task.pk %}"
+                   class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-inbox" style="font-size:3rem; color:#dee2e6;"></i>
+    <h6 class="mt-3 text-muted">Aucune tâche trouvée</h6>
+    {% if is_creator %}
+    <a href="{% url 'task_create' project.pk %}" class="btn btn-sm mt-2"
+       style="background:brown; color:bisque;">
+        <i class="bi bi-plus-circle"></i> Ajouter une tâche
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- CHAT EN TEMPS RÉEL -->
+<div class="card mt-4 p-3">
+    <h6 class="fw-bold mb-3">
+        <i class="bi bi-chat-dots text-success"></i>
+        Chat du projet
+        <span class="badge bg-success ms-2" id="status-badge">Connecté</span>
+    </h6>
+
+    <!-- Messages -->
+    <div id="chat-messages"
+         style="height:300px; overflow-y:auto; background:#f8f9fa;
+                border-radius:8px; padding:15px;"
+         class="mb-3">
+        <p class="text-muted text-center small">
+            <i class="bi bi-clock"></i> Chargement du chat...
+        </p>
+    </div>
+
+    <!-- Input -->
+    <div class="d-flex gap-2">
+        <input type="text" id="chat-input"
+               class="form-control"
+               placeholder="Tapez votre message..."
+               maxlength="500">
+        <button id="send-btn" class="btn fw-bold px-3"
+                style="background:brown; color:bisque;">
+            <i class="bi bi-send"></i>
+        </button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const projectId   = {{ project.pk }};
+    const currentUser = "{{ request.user.first_name|default:request.user.username }}";
+    const wsUrl       = `ws://${window.location.host}/ws/chat/${projectId}/`;
+
+    let socket        = new WebSocket(wsUrl);
+    const messagesDiv = document.getElementById('chat-messages');
+    const chatInput   = document.getElementById('chat-input');
+    const sendBtn     = document.getElementById('send-btn');
+    const statusBadge = document.getElementById('status-badge');
+
+    // Connexion établie
+    socket.onopen = () => {
+        statusBadge.className     = 'badge bg-success ms-2';
+        statusBadge.textContent   = 'Connecté';
+        messagesDiv.innerHTML     = '';
+    };
+
+    // Réception d'un message
+    socket.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        const isMe = data.sender === currentUser;
+
+        if (data.is_system) {
+            messagesDiv.innerHTML += `
+                <div class="text-center my-2">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> ${data.message}
+                        <span class="ms-1">${data.time}</span>
+                    </small>
+                </div>`;
+        } else {
+            messagesDiv.innerHTML += `
+                <div class="d-flex ${isMe ? 'justify-content-end' : ''} mb-2">
+                    <div class="p-2 rounded-3 ${isMe ? 'bg-warning text-dark' : 'bg-white border'}"
+                         style="max-width:70%;">
+                        ${!isMe ? `<div class="fw-bold small text-primary">${data.sender}</div>` : ''}
+                        <div>${data.message}</div>
+                        <div class="text-end" style="font-size:0.7rem; opacity:0.7;">
+                            ${data.time}
+                        </div>
+                    </div>
+                </div>`;
+        }
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    };
+
+    // Déconnexion
+    socket.onclose = () => {
+        statusBadge.className   = 'badge bg-danger ms-2';
+        statusBadge.textContent = 'Déconnecté';
+    };
+
+    // Envoyer un message
+    function sendMessage() {
+        const message = chatInput.value.trim();
+        if (message && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ message }));
+            chatInput.value = '';
+        }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+</script>
+{% endblock %}

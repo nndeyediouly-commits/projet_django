@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% block title %}Statistiques - ESMT {% endblock %}
+{% block nav_stats %}active{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h4 class="fw-bold mb-0">
+        <i class="bi bi-bar-chart text-primary"></i> Statistiques
+    </h4>
+    <p class="text-muted">Année {{ year }} — Trimestre {{ quarter }}</p>
+</div>
+
+<!-- MES STATS PERSONNELLES -->
+<div class="row g-4 mb-4">
+
+    <!-- ANNUEL -->
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-calendar text-warning"></i> Bilan Annuel {{ year }}
+            </h5>
+            <div class="row text-center g-3 mb-3">
+                <div class="col-4">
+                    <div class="p-3 rounded" style="background:brown;">
+                        <h3 class="fw-bold text-primary">{{ my_annual.total }}</h3>
+                        <small class="text-muted">Total tâches</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 rounded" style="background:brown;">
+                        <h3 class="fw-bold text-success">{{ my_annual.done }}</h3>
+                        <small class="text-muted">Terminées</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 rounded" style="background:#f8f9fa;">
+                        <h3 class="fw-bold text-info">{{ my_annual.on_time }}</h3>
+                        <small class="text-muted">Dans les délais</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barre de progression -->
+            <div class="mb-2">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Taux de complétion</span>
+                    <strong>{{ my_annual.pct_done }}%</strong>
+                </div>
+                <div class="progress" style="height:10px;">
+                    <div class="progress-bar bg-success"
+                         style="width:{{ my_annual.pct_done }}%"></div>
+                </div>
+            </div>
+            <div class="mb-2">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Taux dans les délais</span>
+                    <strong>{{ my_annual.pct_on_time }}%</strong>
+                </div>
+                <div class="progress" style="height:10px;">
+                    <div class="progress-bar bg-info"
+                         style="width:{{ my_annual.pct_on_time }}%"></div>
+                </div>
+            </div>
+
+            <!-- PRIME (professeurs uniquement) -->
+            {% if request.user.is_professeur %}
+            <div class="mt-3 p-3 rounded text-center
+                {% if prime == 100000 %}bg-success text-white
+                {% elif prime == 30000 %}bg-warning text-dark
+                {% else %}bg-light{% endif %}">
+                <i class="bi bi-award" style="font-size:1.5rem;"></i>
+                <div class="fw-bold mt-1">
+                    {% if prime > 0 %}
+                        Prime : {{ prime|floatformat:0 }} FCFA 🎉
+                    {% else %}
+                        Pas de prime cette année
+                        <br><small>(90% dans les délais requis)</small>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TRIMESTRIEL -->
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-calendar3 text-info"></i>
+                Bilan Trimestre {{ quarter }} / {{ year }}
+            </h5>
+            <div class="row text-center g-3 mb-3">
+                <div class="col-4">
+                    <div class="p-3 rounded" style="background:brown;">
+                        <h3 class="fw-bold text-primary">{{ my_quarterly.total }}</h3>
+                        <small class="text-muted">Total tâches</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 rounded" style="background:brown; color:bisque;">
+                        <h3 class="fw-bold text-success">{{ my_quarterly.done }}</h3>
+                        <small class="text-muted">Terminées</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 rounded" style="background:brown;">
+                        <h3 class="fw-bold text-info">{{ my_quarterly.on_time }}</h3>
+                        <small class="text-muted">Dans les délais</small>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-2">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Taux de complétion</span>
+                    <strong>{{ my_quarterly.pct_done }}%</strong>
+                </div>
+                <div class="progress" style="height:10px;">
+                    <div class="progress-bar bg-success"
+                         style="width:{{ my_quarterly.pct_done }}%"></div>
+                </div>
+            </div>
+            <div>
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Taux dans les délais</span>
+                    <strong>{{ my_quarterly.pct_on_time }}%</strong>
+                </div>
+                <div class="progress" style="height:10px;">
+                    <div class="progress-bar bg-info"
+                         style="width:{{ my_quarterly.pct_on_time }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABLEAU ÉQUIPE (professeurs uniquement) -->
+{% if request.user.is_professeur and team_stats %}
+<div class="card p-4">
+    <h5 class="fw-bold mb-3">
+        <i class="bi bi-people text-success"></i>
+        Évaluation de l'équipe — Primes {{ year }}
+    </h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead style="background:brown; color:bisque;">
+                <tr>
+                    <th>Professeur</th>
+                    <th class="text-center">Tâches</th>
+                    <th class="text-center">Terminées</th>
+                    <th class="text-center">Dans les délais</th>
+                    <th class="text-center">Taux délais</th>
+                    <th class="text-center">Prime</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in team_stats %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">
+                            {{ item.user.get_full_name|default:item.user.username }}
+                        </div>
+                        <small class="text-muted">{{ item.user.email }}</small>
+                    </td>
+                    <td class="text-center">{{ item.stats.total }}</td>
+                    <td class="text-center">{{ item.stats.done }}</td>
+                    <td class="text-center">{{ item.stats.on_time }}</td>
+                    <td class="text-center">
+                        <div class="progress" style="height:8px; min-width:80px;">
+                            <div class="progress-bar
+                                {% if item.stats.pct_on_time == 100 %}bg-success
+                                {% elif item.stats.pct_on_time >= 90 %}bg-warning
+                                {% else %}bg-danger{% endif %}"
+                                style="width:{{ item.stats.pct_on_time }}%">
+                            </div>
+                        </div>
+                        <small>{{ item.stats.pct_on_time }}%</small>
+                    </td>
+                    <td class="text-center">
+                        {% if item.prime == 100000 %}
+                            <span class="badge bg-success fs-6">100 000 FCFA</span>
+                        {% elif item.prime == 30000 %}
+                            <span class="badge bg-warning text-dark fs-6">30 000 FCFA</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Aucune</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Légende des primes -->
+    <div class="mt-3 p-3 rounded" style="background:brown;">
+        <small class="text-muted">
+            <i class="bi bi-info-circle"></i>
+            <strong>Règles des primes :</strong>
+            <span class="badge bg-success ms-2">100 000 FCFA</span> → 100% des tâches dans les délais &nbsp;|&nbsp;
+            <span class="badge bg-warning text-dark">30 000 FCFA</span> → 90% ou plus dans les délais
+        </small>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Inscription - ESMT{% endblock %}
+
+{% block auth_content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5 w-100"
+     style="background: linear-gradient(135deg, brown, bisque);">
+    <div class="card p-4" style="width:100%; max-width:520px;">
+        <div class="text-center mb-4">
+            <i class="bi bi-person-plus" style="font-size:2.5rem; color:#f0a500;"></i>
+            <h3 class="mt-2 fw-bold">Créer un compte</h3>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Prénom</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Nom</label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-person"></i> Nom d'utilisateur
+                </label>
+                {{ form.username }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-envelope"></i> Email
+                </label>
+                {{ form.email }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-mortarboard"></i> Rôle
+                </label>
+                {{ form.role }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-lock"></i> Mot de passe
+                </label>
+                {{ form.password1 }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-lock-fill"></i> Confirmer le mot de passe
+                </label>
+                {{ form.password2 }}
+            </div>
+            {% if form.errors %}
+            <div class="alert alert-danger py-2">
+                <i class="bi bi-exclamation-triangle"></i>
+                {% for field in form %}
+                    {% for error in field.errors %}<div>{{ error }}</div>{% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            <button type="submit" class="btn w-100 fw-bold"
+                    style="background:brown; color:bisque;">
+                <i class="bi bi-check-circle"></i> Créer mon compte
+            </button>
+        </form>
+        <hr>
+        <p class="text-center text-muted mb-0">
+            Déjà un compte ?
+            <a href="{% url 'login' %}" class="fw-bold" style="color:#f0a500;">
+                Se connecter
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}

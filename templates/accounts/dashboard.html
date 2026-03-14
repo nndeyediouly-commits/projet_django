@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - ESMT {% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">
+            Bonjour, {{ user.first_name|default:user.username }} !
+        </h4>
+        <p class="text-muted">Voici un résumé de votre activité</p>
+    </div>
+    <a href="{% url 'project_create' %}" class="btn fw-bold"
+       style="background:brown; color:bisque;">
+        <i class="bi bi-plus-circle"></i> Nouveau Projet
+    </a>
+</div>
+
+<!-- CARTES STATISTIQUES -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card p-3" style="border-color:gray;">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <p class="text-muted mb-1 small">Projets</p>
+                    <h3 class="fw-bold">{{ stats.total_projects }}</h3>
+                </div>
+                <i class="bi bi-folder" style="font-size:2.5rem; color:; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card p-3" style="border-color:gray;">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <p class="text-muted mb-1 small">Tâches totales</p>
+                    <h3 class="fw-bold">{{ stats.total_tasks }}</h3>
+                </div>
+                <i class="bi bi-list-task" style="font-size:2.5rem; color:gray; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card p-3" style="border-color:brown;">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <p class="text-muted mb-1 small">Terminées</p>
+                    <h3 class="fw-bold text-success">{{ stats.tasks_done }}</h3>
+                </div>
+                <i class="bi bi-check-circle" style="font-size:2.5rem; color:gray; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card p-3" style="border-color:brown;">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <p class="text-muted mb-1 small">En cours</p>
+                    <h3 class="fw-bold text-danger">{{ stats.tasks_inprog }}</h3>
+                </div>
+                <i class="bi bi-arrow-repeat" style="font-size:2.5rem; color:gray; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PROJETS ET TÂCHES -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0">
+                    <i class="bi bi-folder text-warning"></i> Mes Projets
+                </h6>
+                <a href="{% url 'project_list' %}" class="btn btn-sm btn-outline-secondary">
+                    Voir tout
+                </a>
+            </div>
+            {% if projects %}
+                {% for project in projects|slice:":4" %}
+                <a href="{% url 'project_detail' project.pk %}" class="text-decoration-none">
+                    <div class="d-flex justify-content-between align-items-center
+                                p-2 mb-2 rounded" style="background:#f8f9fa;">
+                        <div>
+                            <span class="fw-semibold text-dark">{{ project.name }}</span><br>
+                            <small class="text-muted">{{ project.tasks.count }} tâche(s)</small>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-folder-x" style="font-size:2rem;"></i>
+                    <p class="mt-2">Aucun projet pour l'instant</p>
+                    <a href="{% url 'project_create' %}" class="btn btn-sm"
+                       style="background:brown; color:bisque;">
+                        Créer un projet
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0">
+                    <i class="bi bi-list-task text-primary"></i> Mes Tâches Récentes
+                </h6>
+                <a href="{% url 'task_list' %}" class="btn btn-sm btn-outline-secondary">
+                    Voir tout
+                </a>
+            </div>
+            {% if my_tasks %}
+                {% for task in my_tasks %}
+                <div class="d-flex justify-content-between align-items-center
+                            p-2 mb-2 rounded" style="background:#f8f9fa;">
+                    <div>
+                        <span class="fw-semibold">{{ task.title }}</span><br>
+                        <small class="text-muted">
+                            <i class="bi bi-calendar3"></i>
+                            {{ task.deadline|date:"d/m/Y" }}
+                        </small>
+                    </div>
+                    {% if task.status == 'todo' %}
+                        <span class="badge bg-secondary">À faire</span>
+                    {% elif task.status == 'in_progress' %}
+                        <span class="badge bg-primary">En cours</span>
+                    {% else %}
+                        <span class="badge bg-success">Terminé</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                    <p class="mt-2">Aucune tâche assignée</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
